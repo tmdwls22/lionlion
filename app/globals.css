@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --oh-bg:#FFC62A;
+  --oh-bg2:#FFB000;
+  --oh-accent:#FF6A2A;
+  --oh-ink:#111111;
+  --oh-muted:#5A5A5A;
+  --oh-card:#FFFFFF;
+  --oh-border:rgba(17,17,17,0.08);
+}
+
+html,body{height:100%;}
+body{
+  color: var(--oh-ink);
+  background: linear-gradient(180deg, var(--oh-bg) 0%, var(--oh-bg2) 55%, var(--oh-bg) 100%);
+}
