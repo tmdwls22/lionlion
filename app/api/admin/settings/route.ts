@@ -17,8 +17,12 @@ export async function POST(req: Request) {
   const kakao = typeof body.kakao_channel_url === "string" ? body.kakao_channel_url.trim() : "";
   const leadTo = typeof body.lead_to_email === "string" ? body.lead_to_email.trim() : "";
 
-  if (kakao) await setSetting("kakao_channel_url", kakao);
-  if (leadTo) await setSetting("lead_to_email", leadTo);
+  try {
+    if (kakao) await setSetting("kakao_channel_url", kakao);
+    if (leadTo) await setSetting("lead_to_email", leadTo);
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e?.message ?? "Supabase not configured" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

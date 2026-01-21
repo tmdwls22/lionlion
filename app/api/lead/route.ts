@@ -1,20 +1,26 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { LeadSchema } from "@/lib/validators";
 import { Resend } from "resend";
 import { getSetting } from "@/lib/settings";
-
-const resend = new Resend(process.env.RESEND_API_KEY!);
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const parsed = LeadSchema.parse(body);
 
+    const sb = getSupabaseAdmin();
+    if (!sb) {
+      return NextResponse.json(
+        { ok: false, error: "Server is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing)" },
+        { status: 500 }
+      );
+    }
+
     const ua = req.headers.get("user-agent") ?? "";
     const ip = req.headers.get("x-forwarded-for") ?? "";
 
-    const { error } = await supabaseAdmin.from("leads").insert({
+    const { error } = await sb.from("leads").insert({
       name: parsed.name,
       email: parsed.email || null,
       phone: parsed.phone || null,
@@ -35,10 +41,15 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
+    // Email notify (optional)
+    const resendKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.LEAD_FROM_EMAIL;
     const toEmail = (await getSetting("lead_to_email")) || "";
-    if (toEmail) {
+
+    if (resendKey && fromEmail && toEmail) {
+      const resend = new Resend(resendKey);
       await resend.emails.send({
-        from: process.env.LEAD_FROM_EMAIL!,
+        from: fromEmail,
         to: toEmail,
         subject: `[어흥] 협업/용역 리드 접수: ${parsed.name}`,
         text:
